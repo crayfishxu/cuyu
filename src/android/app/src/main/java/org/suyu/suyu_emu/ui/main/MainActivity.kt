@@ -36,6 +36,7 @@ import org.suyu.suyu_emu.fragments.AddGameFolderDialogFragment
 import org.suyu.suyu_emu.fragments.ProgressDialogFragment
 import org.suyu.suyu_emu.fragments.MessageDialogFragment
 import org.suyu.suyu_emu.model.AddonViewModel
+import org.suyu.suyu_emu.model.DownloadViewModel
 import org.suyu.suyu_emu.model.DriverViewModel
 import org.suyu.suyu_emu.model.GamesViewModel
 import org.suyu.suyu_emu.model.HomeViewModel
@@ -57,6 +58,8 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     private val taskViewModel: TaskViewModel by viewModels()
     private val addonViewModel: AddonViewModel by viewModels()
     private val driverViewModel: DriverViewModel by viewModels()
+    private val downloadViewModel: DownloadViewModel by viewModels()
+
 
     override var themeId: Int = 0
 
@@ -155,6 +158,18 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
         }
 
         setInsets()
+
+        checkVersion()
+    }
+
+    private fun checkVersion(){
+        downloadViewModel.checkAppVersion(this)
+        downloadViewModel.versionInfo.apply {
+            MessageDialogFragment.newInstance(
+                titleId = R.string.new_version,
+                descriptionString = this.toString(),
+            ).show(supportFragmentManager, MessageDialogFragment.TAG)
+        }
     }
 
     private fun checkKeys() {
