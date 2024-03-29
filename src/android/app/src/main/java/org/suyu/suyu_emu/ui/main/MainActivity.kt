@@ -164,10 +164,10 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
 
     private fun checkVersion(){
         downloadViewModel.checkAppVersion(this)
-        downloadViewModel.versionInfo.apply {
+        downloadViewModel.versionInfo.collect(this) {
+            Log.debug("show version ${it?.downUrl}")
             MessageDialogFragment.newInstance(
                 titleId = R.string.new_version,
-                descriptionString = this.toString(),
             ).show(supportFragmentManager, MessageDialogFragment.TAG)
         }
     }

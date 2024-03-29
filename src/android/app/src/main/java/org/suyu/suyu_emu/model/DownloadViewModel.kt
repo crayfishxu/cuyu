@@ -1,23 +1,26 @@
 package org.suyu.suyu_emu.model
 
 import android.content.Context
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.suyu.suyu_emu.net.ResponseInfo
+import org.suyu.suyu_emu.utils.Log
 
 @Suppress("DEPRECATION")
 class DownloadViewModel : ViewModel(){
-    val versionInfo:MutableLiveData<String?> = MutableLiveData()
+    private val _versionInfo = MutableStateFlow<VersionInfo?>(null)
+    val versionInfo = _versionInfo.asStateFlow()
 
-    init {
-        versionInfo.value = null
-    }
     fun checkAppVersion(context:Context){
         val packageManager = context.packageManager
         val packageName = context.packageName
@@ -27,23 +30,32 @@ class DownloadViewModel : ViewModel(){
             versionCode = packageInfo.versionCode
         }
         viewModelScope.launch {
-            versionInfo.value = loadVersionData(versionCode);
+            _versionInfo.value = loadVersionData(versionCode)
         }
     }
 
-    private suspend fun loadVersionData(versionCode:Int):String?{
+    private suspend fun loadVersionData(versionCode:Int):VersionInfo?{
         return withContext(Dispatchers.IO){
             val client = OkHttpClient()
             val request = Request.Builder()
                 .url("https://api.crayfishxu.top/api/version/check?versionCode=$versionCode")
                 .build()
             val response = client.newCall(request).execute()
+            var versionInfo: VersionInfo? = null
             if(response.isSuccessful){
                 delay(2000)
-                response.body?.string()
-            }else{
-                null
+                try {
+                    val body = response.body?.string()
+                    Log.debug("body " + body.toString())
+                    val responseInfo:ResponseInfo<VersionInfo> = Gson().fromJson(body, object:TypeToken<ResponseInfo<VersionInfo>>(){}.type)
+                    if(responseInfo.data != null) {
+                        versionInfo = responseInfo.data
+                    }
+                }catch (e:Exception){
+                    Log.debug(e.toString())
+                }
             }
+            versionInfo
         }
     }
 }
