@@ -3,9 +3,14 @@
 
 package org.suyu.suyu_emu.ui.main
 
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.view.View
 import android.view.ViewGroup.MarginLayoutParams
 import android.view.WindowManager
@@ -43,6 +48,7 @@ import org.suyu.suyu_emu.model.HomeViewModel
 import org.suyu.suyu_emu.model.InstallResult
 import org.suyu.suyu_emu.model.TaskState
 import org.suyu.suyu_emu.model.TaskViewModel
+import org.suyu.suyu_emu.model.VersionInfo
 import org.suyu.suyu_emu.utils.*
 import org.suyu.suyu_emu.utils.ViewUtils.setVisible
 import java.io.BufferedInputStream
@@ -59,7 +65,9 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     private val addonViewModel: AddonViewModel by viewModels()
     private val driverViewModel: DriverViewModel by viewModels()
     private val downloadViewModel: DownloadViewModel by viewModels()
-
+    private lateinit var downManager:DownloadManager
+    private var broadcastReceiver = DownLoadBroadcast()
+    private var downloadId:Long = 0
 
     override var themeId: Int = 0
 
@@ -165,11 +173,64 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     private fun checkVersion(){
         downloadViewModel.checkAppVersion(this)
         downloadViewModel.versionInfo.collect(this) {
-            Log.debug("show version ${it?.downUrl}")
-            MessageDialogFragment.newInstance(
-                titleId = R.string.new_version,
-            ).show(supportFragmentManager, MessageDialogFragment.TAG)
+            it?.let {
+                Log.debug("show version ${it.downUrl}")
+                MessageDialogFragment.newInstance(
+                    titleId = R.string.new_version,
+                    descriptionString = it.remark ?: "日常更新",
+                    positiveAction = {downAPK(it) },
+                ).show(supportFragmentManager, MessageDialogFragment.TAG)
+            }
         }
+        downManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+    }
+
+    fun downAPK(versionInfo:VersionInfo){
+        val request = DownloadManager.Request(Uri.parse(versionInfo.downUrl))
+            .apply {
+                setTitle("新版本")
+                setDescription(versionInfo.remark ?: "日常更新")
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+                setDestinationInExternalFilesDir(
+                    this@MainActivity,
+                    Environment.DIRECTORY_DOWNLOADS,
+                    "suyu_${versionInfo.versionCode}.apk"
+                )
+            }
+        downloadId = downManager.enqueue(request)
+        registerBroadCast();
+    }
+
+    private fun registerBroadCast() {
+        val intentFilter = IntentFilter().also {
+            it.addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+            it.addAction(DownloadManager.ACTION_NOTIFICATION_CLICKED)
+        }
+        registerReceiver(broadcastReceiver, intentFilter)
+    }
+
+    private inner class DownLoadBroadcast : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            when (intent.action) {
+                DownloadManager.ACTION_DOWNLOAD_COMPLETE -> {
+                    if (id == downloadId) {
+                        // 这里通过 DownloadManager 提供的方法拿到资源的 uri，就不要通过 FileProvider了
+                        val uri = downManager.getUriForDownloadedFile(id)
+                        installApk(uri)
+                    }
+                }
+            }
+        }
+    }
+
+    fun installApk(apkPath: Uri?) {
+        val intent = Intent()
+        intent.action = Intent.ACTION_VIEW
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.setDataAndType(apkPath, "application/vnd.android.package-archive")
+        startActivity(intent)
     }
 
     private fun checkKeys() {

@@ -8,5 +8,6 @@ import java.math.BigInteger
 data class VersionInfo(
     val versionCode: BigInteger,
     val downUrl: String,
-    val weixinUrl: String?
+    val weixinUrl: String?,
+    val remark: String?
 )
