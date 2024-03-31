@@ -172,20 +172,24 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
 
     private fun checkVersion(){
         downloadViewModel.checkAppVersion(this)
-        downloadViewModel.versionInfo.collect(this) {
-            it?.let {
-                Log.debug("show version ${it.downUrl}")
+        downloadViewModel.versionInfo.collect(
+            this,
+            resetState = { downloadViewModel.setVersionInfo(null) }) {
+            Log.info("xu collect $it")
+            if(it != null) {
+                Log.info("show version ${it.downUrl}")
                 MessageDialogFragment.newInstance(
                     titleId = R.string.new_version,
-                    descriptionString = it.remark ?: "日常更新",
+                    descriptionString = "日常更新",
                     positiveAction = {downAPK(it) },
+                    negativeAction = {}
                 ).show(supportFragmentManager, MessageDialogFragment.TAG)
+                downManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             }
         }
-        downManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
     }
 
-    fun downAPK(versionInfo:VersionInfo){
+    private fun downAPK(versionInfo:VersionInfo){
         val request = DownloadManager.Request(Uri.parse(versionInfo.downUrl))
             .apply {
                 setTitle("新版本")

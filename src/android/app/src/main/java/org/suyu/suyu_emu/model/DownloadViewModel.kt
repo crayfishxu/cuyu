@@ -21,6 +21,9 @@ class DownloadViewModel : ViewModel(){
     private val _versionInfo = MutableStateFlow<VersionInfo?>(null)
     val versionInfo = _versionInfo.asStateFlow()
 
+    fun setVersionInfo(versionInfo: VersionInfo?) {
+        _versionInfo.value = versionInfo
+    }
     fun checkAppVersion(context:Context){
         val packageManager = context.packageManager
         val packageName = context.packageName
@@ -32,6 +35,27 @@ class DownloadViewModel : ViewModel(){
         viewModelScope.launch {
             _versionInfo.value = loadVersionData(versionCode)
         }
+    }
+
+    fun check():VersionInfo?{
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("https://api.crayfishxu.top/api/version/check?versionCode=0")
+            .build()
+        val response = client.newCall(request).execute()
+        var versionInfo: VersionInfo? = null
+        if(response.isSuccessful){
+            try {
+                val body = response.body?.string()
+                val responseInfo:ResponseInfo<VersionInfo> = Gson().fromJson(body, object:TypeToken<ResponseInfo<VersionInfo>>(){}.type)
+                if(responseInfo.data != null) {
+                    versionInfo = responseInfo.data
+                }
+            }catch (e:Exception){
+                Log.debug(e.toString())
+            }
+        }
+        return versionInfo
     }
 
     private suspend fun loadVersionData(versionCode:Int):VersionInfo?{
@@ -46,13 +70,13 @@ class DownloadViewModel : ViewModel(){
                 delay(2000)
                 try {
                     val body = response.body?.string()
-                    Log.debug("body " + body.toString())
+                    Log.info("xu body " + body.toString())
                     val responseInfo:ResponseInfo<VersionInfo> = Gson().fromJson(body, object:TypeToken<ResponseInfo<VersionInfo>>(){}.type)
                     if(responseInfo.data != null) {
                         versionInfo = responseInfo.data
                     }
                 }catch (e:Exception){
-                    Log.debug(e.toString())
+                    Log.error("xu = $e")
                 }
             }
             versionInfo
