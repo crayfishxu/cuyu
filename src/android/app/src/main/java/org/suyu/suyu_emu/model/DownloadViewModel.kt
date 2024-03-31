@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.suyu.suyu_emu.net.ResponseInfo
+import org.suyu.suyu_emu.net.ResponseVersionInfo
+import org.suyu.suyu_emu.net.VersionInfo
 import org.suyu.suyu_emu.utils.Log
 
 @Suppress("DEPRECATION")
@@ -47,7 +48,7 @@ class DownloadViewModel : ViewModel(){
         if(response.isSuccessful){
             try {
                 val body = response.body?.string()
-                val responseInfo:ResponseInfo<VersionInfo> = Gson().fromJson(body, object:TypeToken<ResponseInfo<VersionInfo>>(){}.type)
+                val responseInfo:ResponseVersionInfo = Gson().fromJson(body, object:TypeToken<ResponseVersionInfo>(){}.type)
                 if(responseInfo.data != null) {
                     versionInfo = responseInfo.data
                 }
@@ -71,7 +72,7 @@ class DownloadViewModel : ViewModel(){
                 try {
                     val body = response.body?.string()
                     Log.info("xu body " + body.toString())
-                    val responseInfo:ResponseInfo<VersionInfo> = Gson().fromJson(body, object:TypeToken<ResponseInfo<VersionInfo>>(){}.type)
+                    val responseInfo:ResponseVersionInfo = Gson().fromJson(body, ResponseVersionInfo::class.java)
                     if(responseInfo.data != null) {
                         versionInfo = responseInfo.data
                     }
