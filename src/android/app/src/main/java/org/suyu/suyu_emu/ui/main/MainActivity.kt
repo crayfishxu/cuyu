@@ -48,6 +48,7 @@ import org.suyu.suyu_emu.model.HomeViewModel
 import org.suyu.suyu_emu.model.InstallResult
 import org.suyu.suyu_emu.model.TaskState
 import org.suyu.suyu_emu.model.TaskViewModel
+import org.suyu.suyu_emu.net.VersionInfo
 import org.suyu.suyu_emu.utils.*
 import org.suyu.suyu_emu.utils.ViewUtils.setVisible
 import java.io.BufferedInputStream
