@@ -3,6 +3,9 @@
 
 package org.suyu.suyu_emu.net
 
+import com.squareup.moshi.JsonClass
+
+@JsonClass(generateAdapter = true)
 data class Response<T>(
     var data: T?,
     val code: Int,
