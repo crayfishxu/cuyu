@@ -3,8 +3,9 @@ package org.suyu.suyu_emu.model
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.squareup.moshi.KotlinJsonAdapterFactory
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.suyu.suyu_emu.net.ResponseVersionInfo
+import org.suyu.suyu_emu.net.Response
 import org.suyu.suyu_emu.net.VersionInfo
 import org.suyu.suyu_emu.utils.Log
 
@@ -21,6 +22,11 @@ import org.suyu.suyu_emu.utils.Log
 class DownloadViewModel : ViewModel(){
     private val _versionInfo = MutableStateFlow<VersionInfo?>(null)
     val versionInfo = _versionInfo.asStateFlow()
+
+    /*创建moshi*/
+    val moshi = Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())//使用kotlin反射处理，要加上这个
+        .build()
 
     fun setVersionInfo(versionInfo: VersionInfo?) {
         _versionInfo.value = versionInfo
@@ -38,27 +44,6 @@ class DownloadViewModel : ViewModel(){
         }
     }
 
-    fun check():VersionInfo?{
-        val client = OkHttpClient()
-        val request = Request.Builder()
-            .url("https://api.crayfishxu.top/api/version/check?versionCode=0")
-            .build()
-        val response = client.newCall(request).execute()
-        var versionInfo: VersionInfo? = null
-        if(response.isSuccessful){
-            try {
-                val body = response.body?.string()
-                val responseInfo:ResponseVersionInfo = Gson().fromJson(body, object:TypeToken<ResponseVersionInfo>(){}.type)
-                if(responseInfo.data != null) {
-                    versionInfo = responseInfo.data
-                }
-            }catch (e:Exception){
-                Log.debug(e.toString())
-            }
-        }
-        return versionInfo
-    }
-
     private suspend fun loadVersionData(versionCode:Int):VersionInfo?{
         return withContext(Dispatchers.IO){
             val client = OkHttpClient()
@@ -72,8 +57,11 @@ class DownloadViewModel : ViewModel(){
                 try {
                     val body = response.body?.string()
                     Log.info("xu body " + body.toString())
-                    val responseInfo:ResponseVersionInfo = Gson().fromJson(body, ResponseVersionInfo::class.java)
-                    if(responseInfo.data != null) {
+                    /*声明adapter，指定要处理的类型*/
+                    val parameterizedType = Types.newParameterizedType(Response::class.java, VersionInfo::class.java)
+                    val jsonAdapter = moshi.adapter<Response<VersionInfo>>(parameterizedType)
+                    val responseInfo = jsonAdapter.fromJson(body)
+                    if(responseInfo?.data != null) {
                         versionInfo = responseInfo.data
                     }
                 }catch (e:Exception){
