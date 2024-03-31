@@ -8,6 +8,6 @@ import com.squareup.moshi.JsonClass
 @JsonClass(generateAdapter = true)
 data class Response<T>(
     var data: T?,
-    val code: Int,
+    val code: String,
     val msg: String
 )

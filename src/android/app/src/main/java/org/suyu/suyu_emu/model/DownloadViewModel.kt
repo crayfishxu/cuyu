@@ -56,13 +56,18 @@ class DownloadViewModel : ViewModel(){
                 delay(2000)
                 try {
                     val body = response.body?.string()
-                    Log.info("xu body " + body.toString())
-                    /*声明adapter，指定要处理的类型*/
-                    val parameterizedType = Types.newParameterizedType(Response::class.java, VersionInfo::class.java)
-                    val jsonAdapter = moshi.adapter<Response<VersionInfo>>(parameterizedType)
-                    val responseInfo = jsonAdapter.fromJson(body)
-                    if(responseInfo?.data != null) {
-                        versionInfo = responseInfo.data
+                    if(body != null) {
+                        Log.info("xu body $body")
+                        /*声明adapter，指定要处理的类型*/
+                        val parameterizedType = Types.newParameterizedType(
+                            Response::class.java,
+                            VersionInfo::class.java
+                        )
+                        val jsonAdapter = moshi.adapter<Response<VersionInfo>>(parameterizedType)
+                        val responseInfo = jsonAdapter.fromJson(body.trimIndent())
+                        if (responseInfo?.data != null) {
+                            versionInfo = responseInfo.data
+                        }
                     }
                 }catch (e:Exception){
                     Log.error("xu = $e")
