@@ -242,7 +242,7 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.7.4")
     implementation("info.debatty:java-string-similarity:2.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+//    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     testImplementation("junit:junit:4.+")
 }
 

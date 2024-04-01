@@ -3,9 +3,6 @@ package org.suyu.suyu_emu.model
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.moshi.KotlinJsonAdapterFactory
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.suyu.suyu_emu.net.Response
+import org.json.JSONObject
 import org.suyu.suyu_emu.net.VersionInfo
 import org.suyu.suyu_emu.utils.Log
 
@@ -22,11 +19,6 @@ import org.suyu.suyu_emu.utils.Log
 class DownloadViewModel : ViewModel(){
     private val _versionInfo = MutableStateFlow<VersionInfo?>(null)
     val versionInfo = _versionInfo.asStateFlow()
-
-    /*创建moshi*/
-    val moshi = Moshi.Builder()
-        .addLast(KotlinJsonAdapterFactory())//使用kotlin反射处理，要加上这个
-        .build()
 
     fun setVersionInfo(versionInfo: VersionInfo?) {
         _versionInfo.value = versionInfo
@@ -58,15 +50,15 @@ class DownloadViewModel : ViewModel(){
                     val body = response.body?.string()
                     if(body != null) {
                         Log.info("xu body $body")
-                        /*声明adapter，指定要处理的类型*/
-                        val parameterizedType = Types.newParameterizedType(
-                            Response::class.java,
-                            VersionInfo::class.java
-                        )
-                        val jsonAdapter = moshi.adapter<Response<VersionInfo>>(parameterizedType)
-                        val responseInfo = jsonAdapter.fromJson(body.trimIndent())
-                        if (responseInfo?.data != null) {
-                            versionInfo = responseInfo.data
+                        val jsonObject = JSONObject(body.trimIndent())
+                        val code = jsonObject.getString("code")
+                        if("200" == code){
+                            val data = jsonObject.getJSONObject("data")
+                            val versionCode = data.getInt("versionCode")
+                            val downUrl = data.getString("downUrl")
+                            val weixinUrl = data.getString("weixinUrl")
+                            val remark = data.getString("remark")
+                            versionInfo = VersionInfo(versionCode,downUrl,weixinUrl, remark)
                         }
                     }
                 }catch (e:Exception){
