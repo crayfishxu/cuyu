@@ -182,10 +182,12 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
                     titleId = R.string.new_version,
                     descriptionString = it.remark ?:"日常更新",
                     dismissible = false,
-                    positiveButtonTitleString = "确认",
-                    positiveAction = {downAPK(it) },
+                    positiveButtonTitleId = android.R.string.cancel,
+                    negativeButtonTitleId = android.R.string.ok,
+                    positiveAction = { Log.info("xu positive")},
                     negativeAction = {
                         Log.info("xu negative")
+                        downAPK(it)
                     }
                 ).show(supportFragmentManager, MessageDialogFragment.TAG)
                 downManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
