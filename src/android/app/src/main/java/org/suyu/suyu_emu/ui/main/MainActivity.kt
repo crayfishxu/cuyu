@@ -177,12 +177,16 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
             resetState = { downloadViewModel.setVersionInfo(null) }) {
             Log.info("xu collect $it")
             if(it != null) {
-                Log.info("show version ${it.downUrl}")
+                Log.info("show downUrl ${it.downUrl}")
                 MessageDialogFragment.newInstance(
                     titleId = R.string.new_version,
-                    descriptionString = "日常更新",
+                    descriptionString = it.remark ?:"日常更新",
+                    dismissible = false,
+                    positiveButtonTitleString = "确认",
                     positiveAction = {downAPK(it) },
-                    negativeAction = {}
+                    negativeAction = {
+                        Log.info("xu negative")
+                    }
                 ).show(supportFragmentManager, MessageDialogFragment.TAG)
                 downManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             }
@@ -190,6 +194,7 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     }
 
     private fun downAPK(versionInfo:VersionInfo){
+        Log.info("xu downAPK")
         val request = DownloadManager.Request(Uri.parse(versionInfo.downUrl))
             .apply {
                 setTitle("新版本")
@@ -216,6 +221,7 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     private inner class DownLoadBroadcast : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent) {
             val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            Log.info("xu onReceive ${intent.action}")
             when (intent.action) {
                 DownloadManager.ACTION_DOWNLOAD_COMPLETE -> {
                     if (id == downloadId) {
