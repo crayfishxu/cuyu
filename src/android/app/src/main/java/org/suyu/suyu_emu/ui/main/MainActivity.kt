@@ -206,7 +206,7 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
                 )
             }
         downloadId = downManager.enqueue(request)
-        registerBroadCast();
+//        registerBroadCast()
     }
 
     private fun registerBroadCast() {
