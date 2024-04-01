@@ -6,6 +6,7 @@ package org.suyu.suyu_emu.ui.main
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
@@ -29,6 +30,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.google.android.material.color.MaterialColors
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.navigation.NavigationBarView
 import java.io.File
 import java.io.FilenameFilter
@@ -178,18 +180,13 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
             Log.info("xu collect $it")
             if(it != null) {
                 Log.info("show downUrl ${it.downUrl}")
-                MessageDialogFragment.newInstance(
-                    titleId = R.string.new_version,
-                    descriptionString = it.remark ?:"日常更新",
-                    dismissible = false,
-                    positiveButtonTitleId = android.R.string.cancel,
-                    negativeButtonTitleId = android.R.string.ok,
-                    positiveAction = { Log.info("xu positive")},
-                    negativeAction = {
-                        Log.info("xu negative")
+                MaterialAlertDialogBuilder(this)
+                    .setTitle(R.string.new_version)
+                    .setPositiveButton(android.R.string.ok) { _: DialogInterface, _: Int ->
                         downAPK(it)
                     }
-                ).show(supportFragmentManager, MessageDialogFragment.TAG)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
                 downManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
             }
         }
